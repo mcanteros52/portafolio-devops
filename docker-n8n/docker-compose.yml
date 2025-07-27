@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  n8n:
+    image: n8nio/n8n:1.39.0
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - WEBHOOK_URL=https://matiascanteros.site
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin123
+      - N8N_ENCRYPTION_KEY=clave_secreta_larga
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+    networks:
+      - n8n_net
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    networks:
+      - n8n_net
+      - portafolio_net
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    networks:
+      - n8n_net
+
+  portafolio:
+    image: nginx:alpine
+    container_name: portafolio-web
+    volumes:
+      - ./portafolio-devops:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - portafolio_net
+    expose:
+      - "80"
+
+networks:
+  n8n_net:
+    driver: bridge
+  portafolio_net:
+    driver: bridge
