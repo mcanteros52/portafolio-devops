@@ -1,0 +1,45 @@
+version: '3'
+
+services:
+  db:
+    image: mariadb:10.6
+    container_name: passbolt-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: root123
+    volumes:
+      - db_data:/var/lib/mysql
+
+  passbolt:
+    image: passbolt/passbolt:latest-ce
+    container_name: passbolt
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      APP_FULL_BASE_URL: ${APP_FULL_BASE_URL}
+      DATASOURCES_DEFAULT_HOST: ${DB_HOST}
+      DATASOURCES_DEFAULT_PORT: ${DB_PORT}
+      DATASOURCES_DEFAULT_USERNAME: ${DB_USERNAME}
+      DATASOURCES_DEFAULT_PASSWORD: ${DB_PASSWORD}
+      DATASOURCES_DEFAULT_DATABASE: ${DB_NAME}
+      EMAIL_DEFAULT_FROM: ${EMAIL_DEFAULT_FROM}
+      EMAIL_TRANSPORT_DEFAULT_HOST: ${EMAIL_TRANSPORT_DEFAULT_HOST}
+      EMAIL_TRANSPORT_DEFAULT_PORT: ${EMAIL_TRANSPORT_DEFAULT_PORT}
+      EMAIL_TRANSPORT_DEFAULT_USERNAME: ${EMAIL_TRANSPORT_DEFAULT_USERNAME}
+      EMAIL_TRANSPORT_DEFAULT_PASSWORD: ${EMAIL_TRANSPORT_DEFAULT_PASSWORD}
+    volumes:
+      - gpg_volume:/etc/passbolt/gpg
+    networks:
+      - n8n_net
+
+volumes:
+  db_data:
+  gpg_volume:
+
+networks:
+  n8n_net:
+    external: true
